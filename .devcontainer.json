@@ -1,0 +1,9 @@
+{
+    "name": "node",
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "poker_analize",
+    "workspaceFolder": "/usr/src/app/poker_analize",
+    "shutdownAction": "stopCompose",
+    "extensions": []
+
+  }
