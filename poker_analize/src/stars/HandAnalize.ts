@@ -7,11 +7,7 @@ export function analize(handHistory: string, userName: string) {
         //レイズの回数(SRPか3betか4bet...か)
         let raiseCount = 0
         const myHand = getHand(hand, userName)
-        let yourAction = getPreflopAction(hand, userName)
-        let postFlop = ""
-        let flop = ""
-        let turn = ""
-        let river = ""
+        let { myAction, myPosition } = getPreflopAction(hand, userName)
     })
 }
 
@@ -22,22 +18,22 @@ function getPreflopAction(history: string, userName: string) {
     let yourPosition = ""
     let yourAction = ""
 
-    eachPlayerAction = eachPlayerAction.filter(item => (item.match("disconnected")==null))
+    eachPlayerAction = eachPlayerAction.filter(item => (item.match("disconnected") == null))
     for (let i = 0; i < 6; i++) {
         if (eachPlayerAction[i + 1].indexOf(userName) !== -1) {
             yourPosition = positionList[i]
             yourAction = eachPlayerAction[i + 1].split(": ")[1]
-            if(yourAction===undefined){
-                yourAction="walk"
+            if (yourAction === undefined) {
+                yourAction = "walk"
             }
-            else if(!yourAction.match("folds")){
-                yourAction=yourAction.split(" ")[0]
+            else if (!yourAction.match("folds")) {
+                yourAction = yourAction.split(" ")[0]
             }
             break
         }
     }
 
-    return yourAction
+    return { myAction: yourAction, myPosition: yourPosition }
 }
 
 
