@@ -1,6 +1,6 @@
 import { DropArea } from './DropDirectory'
 import { analize } from '../stars/HandAnalize'
-import {HandRange} from './RangeGrid'
+import { HandRange } from './RangeGrid'
 
 import '../css/button.css'
 
@@ -19,7 +19,7 @@ export function Top() {
                 });
             });
             const hoge = await file.text()
-            analize(hoge, "i-taisuke")
+            analize(hoge, "i-taisuke", "utg")
         } else if (entry.isDirectory) {
             const directoryReader = entry.createReader();
             const entries = await new Promise((resolve) => {
@@ -37,7 +37,15 @@ export function Top() {
                 ここにファイル/フォルダをドロップしてください
             </div>
         </DropArea>
-
+        <select>
+            <option value="">--ポジションを選択してください</option>
+            <option value="utg">UTG</option>
+            <option value="hj">HJ</option>
+            <option value="co">CO</option>
+            <option value="btn">BTN</option>
+            <option value="sb">SB</option>
+            <option value="bb">BB</option>
+        </select>
         <HandRange />
     </div>)
 }

@@ -1,18 +1,27 @@
-export function analize(handHistory: string, userName: string) {
-    console.log("handhistory", handHistory)
+export function analize(handHistory: string, userName: string, position: string) {
     //ハンドの一覧からハンド単位に分ける
     const handArray = handHistory.split("*** HOLE CARDS ***\r\n")
     //1つ目のデータはいらない。２つ目のデータからがハンドの詳細
+    const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+    const allHand: any = {}
+    card.forEach((row, rowIndex) => {
+        card.forEach((column, columnIndex) => {
+            allHand[rowIndex < columnIndex ? row + column + "s" : rowIndex > columnIndex ? column + row + "o" : column + row] = { "raises": 0, "calls": 0, "folds": 0 }
+        })
+    })
     handArray.slice(1).forEach((hand: string) => {
-        //レイズの回数(SRPか3betか4bet...か)
-        let raiseCount = 0
         const myHand = getHand(hand, userName)
         let { myAction, myPosition } = getPreflopAction(hand, userName)
+        if (myPosition === position) {
+            console.log(myHand)
+            allHand[myHand][myAction] += 1
+        }
     })
+    console.log("allHand", allHand)
 }
 
 function getPreflopAction(history: string, userName: string) {
-    const positionList = ["UTG", "HJ", "CO", "BTN", "SB", "BB"]
+    const positionList = ["utg", "hj", "co", "btn", "sb", "bb"]
     const preflop = history.split("***")[0]
     let eachPlayerAction = preflop.split("\r\n")
     let yourPosition = ""
@@ -45,17 +54,17 @@ function getHand(history: string, userName: string): string {
     } else {
         yourhand = yourhand.substr(0, 2) + yourhand.substr(3, 2)
     }
-
     card_picture.forEach((picture) => {
-        if (yourhand.substr(3, 1) === picture) {
-            yourhand = yourhand.substr(3, 2) + yourhand.substr(0, 2)
+        if (yourhand.substr(2, 1) === picture) {
+            yourhand = yourhand.substr(2, 2) + yourhand.substr(0, 2)
         }
     })
-    console.log("yourhand", yourhand)
     if (yourhand.substr(1, 1) === yourhand.substr(3, 1)) {
         yourhand = yourhand.substr(0, 1) + yourhand.substr(2, 1) + "s"
-    } else {
+    } else if (yourhand.substr(0, 1) !== yourhand.substr(2, 1)) {
         yourhand = yourhand.substr(0, 1) + yourhand.substr(2, 1) + "o"
+    } else {
+        yourhand = yourhand.substr(0, 1) + yourhand.substr(2, 1)
     }
     return yourhand
 }

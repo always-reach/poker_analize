@@ -8,7 +8,7 @@ const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "
 
 const Square:React.FC<Props> = (props) => {
     const {card}=props
-    return <button className="square">{card}</button>
+    return <button className="square" style={{background:"linear-gradient(to right, red 33%, green 33%, green 66%, blue 66%)"}}>{card}</button>
 }
 
 
