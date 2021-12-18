@@ -1,34 +1,46 @@
+import * as React from 'react'
 import { DropArea } from './DropDirectory'
-import { analize } from '../stars/HandAnalize'
+import { analize, createCardList, fileToText } from '../stars/HandAnalize'
 import { HandRange } from './RangeGrid'
 
 import '../css/button.css'
 
 const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+
 export function Top() {
+    const [allHand, setAllHand] = React.useState(createCardList())
+    const [position, setPosition] = React.useState<string>("")
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-        const item = e.dataTransfer?.items[0];
-        const entry = item?.webkitGetAsEntry();
+        const item: DataTransferItem = e.dataTransfer?.items[0];
+        const entry: any = item?.webkitGetAsEntry();
+        let handText: string | null = ""
 
-        if (entry.isFile) {
-            //ファイルの解析
-            const file: File = await new Promise((resolve) => {
-                entry.file((file: File) => {
-                    resolve(file);
-                });
-            });
-            const hoge = await file.text()
-            analize(hoge, "i-taisuke", "utg")
-        } else if (entry.isDirectory) {
+        if (entry.isDirectory) {
             const directoryReader = entry.createReader();
-            const entries = await new Promise((resolve) => {
+            const fileEntries: any = await new Promise((resolve) => {
                 directoryReader.readEntries((entries: object) => {
-                    resolve(entries);
+                    return resolve(entries)
                 });
             });
-            console.log("これはディレクトリです", entries)
+            const response = await Promise.all(fileEntries.map(async (file: any) => { return fileToText(file) }))
+            handText = response.join("\r\n")
+        } else if (entry.isFile) {
+            console.log("this is file")
+            //ファイルの解析
+            handText = await fileToText(entry)
         }
+
+        console.log("handText", handText)
+        if (handText == null) {
+            return
+        }
+        
+        setAllHand(analize(handText, "i-taisuke", position))
+    }
+
+    const selectPosition = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setPosition(e.target.value)
     }
 
     return (<div>
@@ -37,7 +49,7 @@ export function Top() {
                 ここにファイル/フォルダをドロップしてください
             </div>
         </DropArea>
-        <select>
+        <select onChange={selectPosition}>
             <option value="">--ポジションを選択してください</option>
             <option value="utg">UTG</option>
             <option value="hj">HJ</option>
@@ -46,7 +58,7 @@ export function Top() {
             <option value="sb">SB</option>
             <option value="bb">BB</option>
         </select>
-        <HandRange />
+        <HandRange hand={allHand} />
     </div>)
 }
 
