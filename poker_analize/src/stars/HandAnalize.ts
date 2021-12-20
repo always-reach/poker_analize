@@ -1,15 +1,18 @@
+import { PokerSituation } from "../types"
+
 const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
 const card_picture: string[] = ["T", "J", "Q", "K", "A"]
 const positionList: string[] = ["utg", "hj", "co", "btn", "sb", "bb"]
-export function analize(handHistory: string, userName: string, position: string): object {
+
+export function analize(handHistory: string, userName: string, situation:PokerSituation ): object {
     //ハンドの一覧からハンド単位に分ける
     const handArray = handHistory.split("*** HOLE CARDS ***\r\n")
     //1つ目のデータはいらない。２つ目のデータからがハンドの詳細
     const allHand: any = createCardList()
     handArray.slice(1).forEach((hand: string) => {
         const myHand = getHand(hand, userName)
-        let { myAction, myPosition } = getPreflopAction(hand, userName)
-        if (myPosition === position) {
+        let { myAction, myPosition, raiseCount } = getPreflopAction(hand, userName)
+        if (myPosition === situation.heroPosition) {
             allHand[myHand][myAction] += 1
         }
     })
@@ -20,12 +23,14 @@ function getPreflopAction(history: string, userName: string) {
 
     const preflop = history.split("***")[0]
     let eachPlayerAction = preflop.split("\r\n")
+    let raiseCount = 0
     let yourPosition = ""
     let yourAction = ""
 
     try {
         eachPlayerAction = eachPlayerAction.filter(item => (item.match("disconnected") == null))
         for (let i = 0; i < 6; i++) {
+            
             if (eachPlayerAction[i + 1].indexOf(userName) !== -1) {
                 yourPosition = positionList[i]
                 yourAction = eachPlayerAction[i + 1].split(": ")[1]
@@ -44,7 +49,7 @@ function getPreflopAction(history: string, userName: string) {
     }
 
 
-    return { myAction: yourAction, myPosition: yourPosition }
+    return { myAction: yourAction, myPosition: yourPosition, raiseCount: raiseCount }
 }
 
 
@@ -87,6 +92,14 @@ export function calcActionPercentage(raises: number, calls: number, folds: numbe
     const foldPercentage = folds / (raises + calls + folds) * 100 | 0
 
     return { raises: raisePercentage, calls: callPercentage, folds: foldPercentage }
+}
+
+export function getGradient(raises: number, calls: number, folds: number) {
+    const raiseGradient = raises
+    const callGradient = calls !== 0 ? raises + calls : raises
+    const foldGradient = folds !== 0 ? callGradient + folds : callGradient
+
+    return { raises: raiseGradient, calls: callGradient, folds: foldGradient }
 }
 
 export async function fileToText(entry: any) {

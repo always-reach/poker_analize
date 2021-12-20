@@ -4,12 +4,18 @@ import { analize, createCardList, fileToText } from '../stars/HandAnalize'
 import { HandRange } from './RangeGrid'
 
 import '../css/button.css'
+import { PokerSituation, Position } from '../types'
 
-const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+const initialSituation = {
+    heroPosition: "" as Position,
+    villainPosition: "" as Position,
+    raiseCount: 1,
+    aggresser: "utg" as Position
+}
 
 export function Top() {
     const [allHand, setAllHand] = React.useState(createCardList())
-    const [position, setPosition] = React.useState<string>("")
+    const [situation, setSituation] = React.useState<PokerSituation>(initialSituation)
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         const item: DataTransferItem = e.dataTransfer?.items[0];
@@ -26,21 +32,20 @@ export function Top() {
             const response = await Promise.all(fileEntries.map(async (file: any) => { return fileToText(file) }))
             handText = response.join("\r\n")
         } else if (entry.isFile) {
-            console.log("this is file")
             //ファイルの解析
             handText = await fileToText(entry)
         }
-
-        console.log("handText", handText)
         if (handText == null) {
             return
         }
-        
-        setAllHand(analize(handText, "i-taisuke", position))
+
+        setAllHand(analize(handText, "i-taisuke", situation))
     }
 
     const selectPosition = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setPosition(e.target.value)
+        const newSituation = { ...situation }
+        newSituation["heroPosition"] = e.target.value as Position
+        setSituation(newSituation)
     }
 
     return (<div>
