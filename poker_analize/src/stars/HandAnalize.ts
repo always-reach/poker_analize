@@ -1,18 +1,18 @@
-import { PokerSituation } from "../types"
+import { PokerSituation, Player, CardList } from "../types"
 
 const card: string[] = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
 const card_picture: string[] = ["T", "J", "Q", "K", "A"]
 const positionList: string[] = ["utg", "hj", "co", "btn", "sb", "bb"]
 
-export function analize(handHistory: string, userName: string, situation:PokerSituation ): object {
+export function analize(handHistory: string, userName: string, situation: PokerSituation): CardList {
     //ハンドの一覧からハンド単位に分ける
     const handArray = handHistory.split("*** HOLE CARDS ***\r\n")
     //1つ目のデータはいらない。２つ目のデータからがハンドの詳細
     const allHand: any = createCardList()
     handArray.slice(1).forEach((hand: string) => {
         const myHand = getHand(hand, userName)
-        let { myAction, myPosition, raiseCount } = getPreflopAction(hand, userName)
-        if (myPosition === situation.heroPosition) {
+        let { myAction, myPosition, raiseCount, firstRaiser } = getPreflopAction(hand, userName)
+        if (myPosition === situation.heroPosition && firstRaiser === situation.firstRaiser) {
             allHand[myHand][myAction] += 1
         }
     })
@@ -22,34 +22,58 @@ export function analize(handHistory: string, userName: string, situation:PokerSi
 function getPreflopAction(history: string, userName: string) {
 
     const preflop = history.split("***")[0]
-    let eachPlayerAction = preflop.split("\r\n")
-    let raiseCount = 0
-    let yourPosition = ""
-    let yourAction = ""
+    let eachPlayerAction: string[] = preflop.split("\r\n")
+    let raiseCount: number = 0
+    let yourPosition: string = ""
+    let yourAction: string = ""
+    let firstRaiser: Player = "hero"
+    let playerName: string = ""
+    let playerAction: string = ""
 
     try {
         eachPlayerAction = eachPlayerAction.filter(item => (item.match("disconnected") == null))
         for (let i = 0; i < 6; i++) {
-            
-            if (eachPlayerAction[i + 1].indexOf(userName) !== -1) {
-                yourPosition = positionList[i]
-                yourAction = eachPlayerAction[i + 1].split(": ")[1]
-                if (yourAction === undefined) {
-                    yourAction = "walk"
+            //プレイヤー名を取得
+            playerName = eachPlayerAction[i + 1].split(": ")[0]
+            //プレイヤーのアクションを取得
+            playerAction = eachPlayerAction[i + 1].split(": ")[1]
+            //アクションの存在チェック(時間切れやウォークを考慮)
+            if (playerAction!==undefined) {
+                //raiseの時は raises $xxx to $xxx となるため等号演算子ではなくmatchで条件分岐する
+                if (playerAction.match(/raises/)) {
+                    //レイズの回数を記録
+                    raiseCount += 1
+                    //最初にレイズしたプレイヤー(自分かそうじゃないかだけ)を記録
+                    if (raiseCount === 1) {
+                        if (playerName === userName) {
+                            firstRaiser = "hero"
+                        } else {
+                            firstRaiser = "villain"
+                        }
+                    }
                 }
-                else if (!yourAction.match("folds")) {
-                    yourAction = yourAction.split(" ")[0]
+
+                if (playerName === userName) {
+                    yourPosition = positionList[i]
+                    yourAction = eachPlayerAction[i + 1].split(": ")[1]
+                    if (yourAction === undefined) {
+                        yourAction = "walk"
+                    }
+                    else if (!yourAction.match("folds")) {
+                        yourAction = yourAction.split(" ")[0]
+                    }
+                    break
                 }
-                break
             }
         }
     } catch (e) {
-        console.log("history", history)
-        console.log("preflop", preflop)
+        console.log("error", e)
+        console.log("name", playerName)
+        console.log("player", eachPlayerAction)
     }
 
 
-    return { myAction: yourAction, myPosition: yourPosition, raiseCount: raiseCount }
+    return { myAction: yourAction, myPosition: yourPosition, raiseCount: raiseCount, firstRaiser: firstRaiser }
 }
 
 
@@ -76,7 +100,7 @@ function getHand(history: string, userName: string): string {
     return yourhand
 }
 
-export function createCardList() {
+export function createCardList(): CardList {
     const allHand: any = {}
     card.forEach((row, rowIndex) => {
         card.forEach((column, columnIndex) => {
